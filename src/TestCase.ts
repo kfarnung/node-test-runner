@@ -12,37 +12,60 @@ export interface ITestResult {
 }
 
 class TestCase {
-    private readonly name: string;
-    private readonly filePath: string;
-    private readonly flaky: boolean;
-    private readonly timeout: number;
-    private duration: number = 0;
-    private exitCode: number = 1;
-    private output: string = "";
-    private success: boolean = false;
+    private readonly _filePath: string;
+    private readonly _name: string;
+    private _duration: number = 0;
+    private _exitCode: number = 1;
+    private _expectFail: boolean = false;
+    private _flaky: boolean = false;
+    private _output: string = "";
+    private _success: boolean = false;
+    private _timeout: number = 0;
 
-    constructor(name: string, filePath: string, flaky: boolean = false, timeout: number = 2 * 60 * 1000) {
-        this.name = name;
-        this.filePath = filePath;
-        this.flaky = flaky;
-        this.timeout = timeout;
+    constructor(name: string, filePath: string) {
+        this._name = name;
+        this._filePath = filePath;
+    }
+
+    get expectFail() {
+        return this._expectFail;
+    }
+
+    set expectFail(value: boolean) {
+        this._expectFail = value;
+    }
+
+    get flaky() {
+        return this._flaky;
+    }
+
+    set flaky(value: boolean) {
+        this._flaky = value;
+    }
+
+    get timeout() {
+        return this._timeout;
+    }
+
+    set timeout(value: number) {
+        this._timeout = value;
     }
 
     public async run() {
         const promise = new Promise((resolve, reject) => {
-            this.duration = 0;
-            this.exitCode = 1;
-            this.output = "";
-            this.success = false;
+            this._duration = 0;
+            this._exitCode = 1;
+            this._output = "";
+            this._success = false;
 
             const output: string[] = [];
             const start = performance.now();
 
-            const flags = FlagsParser.parse(this.filePath);
+            const flags = FlagsParser.parse(this._filePath);
             const testProcess = ChildProcess.execFile(
                 process.execPath,
-                [...flags, this.filePath],
-                { timeout: this.timeout });
+                [...flags, this._filePath],
+                { timeout: this._timeout });
             testProcess.stdout.setEncoding("utf8");
             testProcess.stderr.setEncoding("utf8");
 
@@ -55,10 +78,10 @@ class TestCase {
             });
 
             testProcess.on("exit", (code: number) => {
-                this.duration = performance.now() - start;
-                this.exitCode = code;
-                this.success = (code === 0);
-                this.output = output.join("");
+                this._duration = performance.now() - start;
+                this._exitCode = code;
+                this._success = this._expectFail ? code !== 0 : code === 0;
+                this._output = output.join("");
 
                 resolve();
             });
@@ -71,12 +94,12 @@ class TestCase {
 
     public getResult(): ITestResult {
         return {
-            duration: this.duration,
-            exitCode: this.exitCode,
-            flaky: this.flaky,
-            name: this.name,
-            output: this.output,
-            success: this.success,
+            duration: this._duration,
+            exitCode: this._exitCode,
+            flaky: this._flaky,
+            name: this._name,
+            output: this._output,
+            success: this._success,
         };
     }
 }
