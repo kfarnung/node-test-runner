@@ -3,21 +3,21 @@ import * as os from "os";
 import { ITestResult } from "./TestCase";
 
 class TapWriter {
-    private readonly writeStream: fs.WriteStream;
-    private readonly consoleEcho: boolean;
-    private testCount: number = 0;
+    private readonly _consoleEcho: boolean;
+    private readonly _writeStream: fs.WriteStream;
+    private _testCount: number = 0;
 
     constructor(filePath: string, consoleEcho: boolean = false) {
-        this.writeStream = fs.createWriteStream(filePath, "utf8");
-        this.writeStream.write(`TAP version 13${os.EOL}`);
+        this._writeStream = fs.createWriteStream(filePath, "utf8");
+        this._writeStream.write(`TAP version 13${os.EOL}`);
 
-        this.consoleEcho = consoleEcho;
+        this._consoleEcho = consoleEcho;
     }
 
     public writeResult(result: ITestResult) {
         const outputLines: string[] = [];
 
-        let topLine = `${result.success ? "ok" : "not ok"} ${this.testCount++} ${result.name}`;
+        let topLine = `${result.success ? "ok" : "not ok"} ${++this._testCount} ${result.name}`;
         if (!result.success && result.flaky) {
             topLine += " # TODO : Fix flaky test";
         }
@@ -41,10 +41,10 @@ class TapWriter {
 
         const outputStr = outputLines.join(os.EOL);
 
-        this.writeStream.write(outputStr);
-        this.writeStream.write(os.EOL);
+        this._writeStream.write(outputStr);
+        this._writeStream.write(os.EOL);
 
-        if (this.consoleEcho) {
+        if (this._consoleEcho) {
             console.log(outputStr);
         }
     }

@@ -5,7 +5,15 @@
     ],
     "jsRules": {},
     "rules": {
-        "no-console": false
+        "no-console": false,
+        "variable-name": {
+            "options": [
+                "allow-leading-underscore",
+                "allow-pascal-case",
+                "ban-keywords",
+                "check-format"
+            ]
+        }
     },
     "rulesDirectory": []
 }

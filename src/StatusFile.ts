@@ -69,22 +69,22 @@ class StatusFile {
         }
     }
 
-    private readonly filePath: string;
-    private prefix: string = "";
-    private readonly statusMap: Map<string, string[]> = new Map();
+    private readonly _filePath: string;
+    private readonly _statusMap: Map<string, string[]> = new Map();
+    private _prefix: string = "";
 
     constructor(filePath: string) {
-        this.filePath = filePath;
+        this._filePath = filePath;
         this.parse();
     }
 
     get testPrefix() {
-        return this.prefix;
+        return this._prefix;
     }
 
     public isSkipped(testName: string) {
         const name = path.basename(testName, path.extname(testName));
-        const status = this.statusMap.get(name);
+        const status = this._statusMap.get(name);
         if (status !== undefined) {
             return status.indexOf("SKIP") >= 0;
         }
@@ -94,7 +94,7 @@ class StatusFile {
 
     public isFlaky(testName: string) {
         const name = path.basename(testName, path.extname(testName));
-        const status = this.statusMap.get(name);
+        const status = this._statusMap.get(name);
         if (status !== undefined) {
             return status.indexOf("FLAKY") >= 0;
         }
@@ -103,11 +103,11 @@ class StatusFile {
     }
 
     private parse() {
-        if (!fs.existsSync(this.filePath)) {
+        if (!fs.existsSync(this._filePath)) {
             return;
         }
 
-        const content = fs.readFileSync(this.filePath, "utf8");
+        const content = fs.readFileSync(this._filePath, "utf8");
         const lines = content.split(/\r?\n/);
         let processRules = false;
 
@@ -125,7 +125,7 @@ class StatusFile {
             const ruleMatch = rulePattern.exec(line);
             if (ruleMatch !== null) {
                 if (processRules) {
-                    this.statusMap.set(ruleMatch[1], ruleMatch[2].trim().split(/, */));
+                    this._statusMap.set(ruleMatch[1], ruleMatch[2].trim().split(/, */));
                 }
 
                 continue;
@@ -133,7 +133,7 @@ class StatusFile {
 
             const prefixMatch = prefixPattern.exec(line);
             if (prefixMatch !== null) {
-                this.prefix = prefixMatch[1];
+                this._prefix = prefixMatch[1];
                 continue;
             }
         }

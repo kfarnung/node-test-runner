@@ -3,41 +3,49 @@ import * as path from "path";
 import StatusFile from "./StatusFile";
 import TestCase from "./TestCase";
 
-class TestSuites {
-    private readonly suiteName: string;
-    private readonly suitePath: string;
-    private readonly statusFile: StatusFile;
+// Default timeout of 2 minutes
+const DEFAULT_TIMEOUT = 2 * 60 * 1000;
 
-    constructor(suitePath: string) {
-        this.suiteName = path.basename(suitePath);
-        this.suitePath = path.resolve(suitePath);
-        this.statusFile = new StatusFile(path.join(this.suitePath, this.suiteName + ".status"));
+class TestSuite {
+    private readonly _statusFile: StatusFile;
+    private readonly _suiteName: string;
+    private readonly _suitePath: string;
+
+    constructor(suiteName: string, suitePath: string) {
+        this._suiteName = suiteName;
+        this._suitePath = path.resolve(suitePath);
+        this._statusFile = new StatusFile(path.join(this._suitePath, this._suiteName + ".status"));
     }
 
     get name() {
-        return this.suiteName;
+        return this._suiteName;
     }
 
     public * getTests() {
         const testPattern = /^(test-.+)\.m?js$/;
-        for (const item of fs.readdirSync(this.suitePath)) {
+        for (const item of fs.readdirSync(this._suitePath)) {
             const testMatch = testPattern.exec(item);
             if (testMatch !== null) {
                 const name = testMatch[1];
 
-                if (!this.statusFile.isSkipped(name)) {
-                    yield new TestCase(
-                        `${this.suiteName}/${name}`,
-                        path.join(this.suitePath, item),
-                        this.statusFile.isFlaky(name));
+                if (!this._statusFile.isSkipped(name)) {
+                    yield this.createTestCase(name, item);
                 }
             }
         }
     }
 
     public isFlaky(name: string) {
-        return this.statusFile.isFlaky(name);
+        return this._statusFile.isFlaky(name);
+    }
+
+    protected createTestCase(name: string, fileName: string) {
+        const testCase = new TestCase(`${this._suiteName}/${name}`, path.join(this._suitePath, fileName));
+        testCase.flaky = this._statusFile.isFlaky(name);
+        testCase.timeout = DEFAULT_TIMEOUT;
+
+        return testCase;
     }
 }
 
-export default TestSuites;
+export default TestSuite;
