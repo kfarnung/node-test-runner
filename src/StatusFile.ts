@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import PlatformHelpers from "./PlatformHelpers";
 
 class StatusFile {
     private static parseSection(condition: string) {
@@ -46,7 +47,7 @@ class StatusFile {
                 break;
 
             case "$jsEngine":
-                fieldValue = (process as any).jsEngine;
+                fieldValue = PlatformHelpers.getJsEngine();
                 break;
 
             case "$system":

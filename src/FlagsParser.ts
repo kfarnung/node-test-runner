@@ -1,4 +1,11 @@
 import * as fs from "fs";
+import PlatformHelpers from "./PlatformHelpers";
+
+const filteredFlags: {[key: string]: string[]} = {
+    chakracore: [
+        "--expose_externalize_string",
+    ],
+};
 
 class FlagsParser {
     public static parse(filePath: string) {
@@ -21,7 +28,12 @@ class FlagsParser {
             flags.push(...match[1].trim().split(" "));
         }
 
-        return flags;
+        return FlagsParser.filterFlags(flags);
+    }
+
+    private static filterFlags(flags: string[]) {
+        const filter = filteredFlags[PlatformHelpers.getJsEngine()] || [];
+        return flags.filter((value) => filter.indexOf(value) < 0);
     }
 }
 
